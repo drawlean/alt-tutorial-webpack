@@ -5,7 +5,7 @@
 ```bash
 git clone https://github.com/kzlathander/alt-tutorial-webpack.git
 cd alt-tutorial-webpack
-git checkout 01
+git checkout 02
 npm install
 npm start
 ```
