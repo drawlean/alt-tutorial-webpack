@@ -3,12 +3,13 @@ var AltContainer = require('alt-container');
 var LocationStore = require('../stores/LocationStore');
 var FavoritesStore = require('../stores/FavoritesStore');
 var LocationActions = require('../actions/LocationActions');
+var FavoriteActions = require('../actions/FavoriteActions');
 
 var Favorites = React.createClass({
   render() {
     return (
       <ul>
-        {this.props.locations.map((location, i) => {
+        {this.props.favLocations.map((location, i) => {
           return (
             <li key={i}>{location.name}</li>
           );
@@ -23,7 +24,8 @@ var AllLocations = React.createClass({
     var location = LocationStore.getLocation(
       Number(ev.target.getAttribute('data-id'))
     );
-    LocationActions.favoriteLocation(location);
+    FavoriteActions.addFavoriteLocation(location);
+    LocationActions.markFavorites(location);
   },
 
   render() {

@@ -23,7 +23,7 @@
   },
   "scripts": {
     "build": "webpack",
-    "dev": "webpack-dev-server "
+    "dev": "webpack & webpack-dev-server --devtool eval --progress --colors --hot --content-base ./"
   },
   "author": "Josh Perez <josh@goatslacker.com>",
   "license": "MIT"

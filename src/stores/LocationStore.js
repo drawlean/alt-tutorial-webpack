@@ -8,12 +8,7 @@ class LocationStore {
     this.locations = [];
     this.errorMessage = null;
 
-    this.bindListeners({
-      handleUpdateLocations: LocationActions.UPDATE_LOCATIONS,
-      handleFetchLocations: LocationActions.FETCH_LOCATIONS,
-      handleLocationsFailed: LocationActions.LOCATIONS_FAILED,
-      setFavorites: LocationActions.FAVORITE_LOCATION
-    });
+    this.bindActions(LocationActions);
 
     this.exportPublicMethods({
       getLocation: this.getLocation
@@ -22,16 +17,18 @@ class LocationStore {
     this.exportAsync(LocationSource);
   }
 
-  handleUpdateLocations(locations) {
+  onUpdateLocations(locations) {
     this.locations = locations;
     this.errorMessage = null;
   }
 
-  handleFetchLocations() {
+
+  onFetchLocations() {
     this.locations = [];
   }
 
-  handleLocationsFailed(errorMessage) {
+
+  onLocationsFailed(errorMessage) {
     this.errorMessage = errorMessage;
   }
 
@@ -45,10 +42,10 @@ class LocationStore {
     });
   }
 
-  setFavorites(location) {
+  onMarkFavorites(location) {
     this.waitFor(FavoritesStore);
 
-    var favoritedLocations = FavoritesStore.getState().locations;
+    var favoritedLocations = FavoritesStore.getState().favLocations;
 
     this.resetAllFavorites();
 

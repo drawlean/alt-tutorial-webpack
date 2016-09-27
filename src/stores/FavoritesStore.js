@@ -1,17 +1,16 @@
 var alt = require('../alt');
-var LocationActions = require('../actions/LocationActions');
+var FavoriteActions = require('../actions/FavoriteActions');
 
 class FavoritesStore {
   constructor() {
-    this.locations = [];
+    this.favLocations = [];
 
-    this.bindListeners({
-      addFavoriteLocation: LocationActions.FAVORITE_LOCATION
-    });
+    this.bindActions(FavoriteActions);
+
   }
 
-  addFavoriteLocation(location) {
-    this.locations.push(location);
+  onAddFavoriteLocation(location) {
+    this.favLocations.push(location);
   }
 }
 
