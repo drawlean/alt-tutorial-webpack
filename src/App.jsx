@@ -1,8 +1,10 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
-var Locations = require('./components/Locations.jsx');
+import RootRouters from './RootRouters.jsx'
+
+import {browserHistory } from 'react-router'
 
 ReactDOM.render(
-    <Locations />,
+    <RootRouters history={browserHistory} />,
     document.getElementById('ReactApp')
 );

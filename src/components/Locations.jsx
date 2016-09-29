@@ -4,6 +4,7 @@ var LocationStore = require('../stores/LocationStore');
 var FavoritesStore = require('../stores/FavoritesStore');
 var LocationActions = require('../actions/LocationActions');
 var FavoriteActions = require('../actions/FavoriteActions');
+import { Link } from 'react-router'
 
 var Favorites = React.createClass({
   render() {

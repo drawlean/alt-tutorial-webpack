@@ -14,16 +14,18 @@
     "open-browser-webpack-plugin": "0.0.2",
     "react": "^15.3.2",
     "react-addons-test-utils": "^15.3.2",
-    "react-dom": "^15.3.2"
-
+    "react-dom": "^15.3.2",
+    "react-router": "^2.8.1"
   },
   "devDependencies": {
+    "express": "^4.14.0",
     "webpack": "^1.13.2",
     "webpack-dev-server": "^1.16.1"
   },
   "scripts": {
     "build": "webpack",
-    "dev": "webpack & webpack-dev-server --devtool eval --progress --colors --hot --content-base ./"
+    "dev": "webpack-dev-server  --inline --devtool eval --progress --colors --hot --content-base ./build --history-api-fallback",
+    "prod": "npm run build & node server.js"
   },
   "author": "Josh Perez <josh@goatslacker.com>",
   "license": "MIT"

@@ -6,8 +6,8 @@ var config = {
         path.resolve(__dirname, 'src/App.jsx'),
     ],
     output: {
-        path: path.resolve(__dirname, 'build'),
-        filename: 'bundle.js'
+        filename: 'bundle.js',
+        path: path.resolve(__dirname,"build"),
     },
     module: {
         loaders: [{
