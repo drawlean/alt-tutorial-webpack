@@ -1,4 +1,8 @@
+import defaults from 'superagent-defaults';
+import superagentPromisePlugin from 'superagent-promise-plugin';
 var LocationActions = require('../actions/LocationActions');
+import co from 'co';
+const request = superagentPromisePlugin(defaults());
 
 var mockData = [
   { id: 0, name: 'Abu Dhabi' },
@@ -20,19 +24,10 @@ var LocationSource = {
   fetchLocations() {
     return {
       remote() {
-        return new Promise(function (resolve, reject) {
-          // simulate an asynchronous flow where data is fetched on
-          // a remote server somewhere.
-          setTimeout(function () {
+        return co(function *() {
+          const resp = yield request.get(`/api/locations`);
+          return resp.body;
 
-            // change this to `false` to see the error action being handled.
-            if (true) {
-              // resolve with some mock data
-              resolve(mockData);
-            } else {
-              reject('Things have broken');
-            }
-          }, 250);
         });
       },
 
