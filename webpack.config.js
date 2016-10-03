@@ -1,6 +1,5 @@
 var path = require('path');
 var OpenBrowserPlugin = require('open-browser-webpack-plugin');
-//var babelpolyfill = require("babel-polyfill");
 
 var config = {
     entry: [
@@ -11,14 +10,25 @@ var config = {
         path: path.resolve(__dirname,"build"),
     },
     module: {
-        loaders: [{
-            test: /\.(js|jsx)$/,
-            loader: 'babel',
-            query:
+
+        loaders: [
             {
-                presets:['es2015',  'react']
+                test: /\.(js|jsx)$/,
+                loader: 'babel',
+                query: {
+                    presets: ['es2015', 'react']
+                }
+            },
+            {
+                test: /\.css$/,
+                loader: "style-loader!css-loader?modules"
+            },
+
+            {
+                test: /\.scss$/,
+                loaders: ["style", "css?sourceMap", "sass?sourceMap"]
             }
-        }]
+        ]
     },
 
     plugins: [

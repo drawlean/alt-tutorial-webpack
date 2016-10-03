@@ -1,0 +1,17 @@
+@import '../libs/_rem.scss';
+
+.home {
+    &__tab {
+        &__li {
+
+            list-style: none;
+            height: rem(60px);
+            vertical-align: middle;
+            float:left;
+            padding-right: rem(60px);
+
+            &:hover { background: #31b0d5;}
+
+        }
+    }
+}

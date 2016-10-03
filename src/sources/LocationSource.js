@@ -25,8 +25,9 @@ var LocationSource = {
     return {
       remote() {
         return co(function *() {
-          const resp = yield request.get(`/api/locations`);
-          return resp.body;
+          //const resp = yield request.get(`/api/locations`);
+          //return resp.body;
+            return mockData;
 
         });
       },

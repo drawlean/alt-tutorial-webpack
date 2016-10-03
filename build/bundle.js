@@ -18847,7 +18847,7 @@
 	  render: function render() {
 	    return _react2.default.createElement(
 	      'div',
-	      null,
+	      { style: { backgroundColor: '#272827' } },
 	      _react2.default.createElement(
 	        'nav',
 	        null,

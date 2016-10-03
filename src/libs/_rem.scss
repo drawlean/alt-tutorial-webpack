@@ -1,0 +1,11 @@
+$relative-font-size: 40px !default;
+
+@function strip-unit($num) {
+  @return $num / ($num * 0 + 1);
+}
+
+@function rem($value) {
+  $v: strip-unit($value);
+  $relative: strip-unit($relative-font-size);
+  @return $v/$relative + rem
+}
