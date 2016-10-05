@@ -4,6 +4,7 @@ var LocationStore = require('../stores/LocationStore');
 var FavoritesStore = require('../stores/FavoritesStore');
 var LocationActions = require('../actions/LocationActions');
 var FavoriteActions = require('../actions/FavoriteActions');
+import BaseLayout from "./BaseLayout.jsx";
 import { Link } from 'react-router'
 //import style from "./Locations.css";
 import "./Locations.scss";
@@ -98,17 +99,19 @@ var Locations = React.createClass({
 
   render() {
     return (
-        <div>
-          <h1 className="locations__table--head">Locations</h1>
-          <AltContainer store={LocationStore}>
-            <AllLocations />
-          </AltContainer>
+        <BaseLayout title="Locations" style={{"backgroundColor":"#967e53"}}>
+            <div>
+              <h1 className="locations__table--head">Locations</h1>
+              <AltContainer store={LocationStore}>
+                <AllLocations />
+              </AltContainer>
 
-          <h1 className="locations__table--head">Favorites</h1>
-          <AltContainer store={FavoritesStore}>
-            <Favorites />
-          </AltContainer>
-        </div>
+              <h1 className="locations__table--head">Favorites</h1>
+              <AltContainer store={FavoritesStore}>
+                <Favorites />
+              </AltContainer>
+            </div>
+        </BaseLayout>
     );
   }
 });

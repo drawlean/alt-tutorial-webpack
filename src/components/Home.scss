@@ -5,10 +5,11 @@
         &__li {
 
             list-style: none;
-            height: rem(60px);
+            height: rem(100px);
             vertical-align: middle;
             float:left;
             padding-right: rem(60px);
+            font-size:rem(60px);
 
             &:hover { background: #31b0d5;}
 
