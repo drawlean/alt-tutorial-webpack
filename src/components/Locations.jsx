@@ -99,7 +99,7 @@ var Locations = React.createClass({
 
   render() {
     return (
-        <BaseLayout title="Locations" style={{"backgroundColor":"#967e53"}}>
+        <BaseLayout title="Locations" style={{"backgroundColor":"#967e52"}}>
             <div>
               <h1 className="locations__table--head">Locations</h1>
               <AltContainer store={LocationStore}>

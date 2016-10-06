@@ -34,7 +34,7 @@ const reducePropsToState = (propsList) => {
         title += prop.title;
         title += ">";
     });
-    
+
     return {style, title};
 }
 
