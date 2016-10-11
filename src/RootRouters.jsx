@@ -14,7 +14,7 @@ class RootRouters extends Component {
     render() {
         const { history } = this.props;
         return (
-            <Router history = {browserHistory} >
+            <Router history = {history} >
                 <Route path ="/" component={Home} >
                     <IndexRoute  component={About}/>
                     <Route path ="/about" component={About} />

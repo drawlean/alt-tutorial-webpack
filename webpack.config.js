@@ -1,20 +1,44 @@
 var path = require('path');
+const webpack = require('webpack');
 var OpenBrowserPlugin = require('open-browser-webpack-plugin');
 const merge = require('webpack-merge');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 var extractSCSS = new ExtractTextPlugin('[name].[chunkhash].css');
 const CleanPlugin = require('clean-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const TARGET = process.env.npm_lifecycle_event;
+
+const PATHS = {
+    build : path.join(__dirname, 'build'),
+    root  : path.resolve(__dirname),
+    template : path.join(__dirname, 'template.html'),
+    logo : path.join(__dirname, 'logo.png'),
+};
+
+const requestPaths = {
+    stage: "http://staging.onedesk-media.com//v1",
+    dev: "http://localhost:8080",
+    production: "https://api.onedesk-media.com/v1"
+};
+
+const htmlPluginDefine = {
+    template: 'index.ejs',
+    title: '小白学React',
+    appMountId: 'ReactApp',
+    inject: false,
+    baseHref: '/'
+};
+
 
 var base = {
     entry: {
         app: path.resolve(__dirname, 'src/App.jsx'),
     },
     output: {
-        filename: '[name].[chunkhash].js',
-        path: path.resolve(__dirname,"build"),
+        filename: '[name].js',
+        path: PATHS.build,
     },
 
     module: {
@@ -24,11 +48,17 @@ var base = {
                 test: /\.(js|jsx)$/,
                 loader: 'babel',
                 query: {
-                    presets: ['es2015', 'react','stage-2']
+                    presets: ['es2015', 'react','stage-2'],
+                    compact: false
                 }
             }
         ]
     },
+    plugins: [
+        new CopyWebpackPlugin([
+            {from: "logo.png"},
+        ]),
+    ]
 };
 
 if(TARGET === 'dev' || !TARGET) {
@@ -44,7 +74,7 @@ if(TARGET === 'dev' || !TARGET) {
             devtool: eval,
             colors: true,
             contentBase: "./build",
-
+            outputPath: PATHS.build,
             // parse host and port from env so this is easy
             // to customize
             host: "0.0.0.0",// process.env.HOST,
@@ -60,7 +90,12 @@ if(TARGET === 'dev' || !TARGET) {
         },
 
         plugins: [
-            new OpenBrowserPlugin({url: 'http://localhost:8080'}),
+
+            new HtmlWebpackPlugin(Object.assign(htmlPluginDefine, {
+                filename: 'index.html',
+            })),
+
+            new OpenBrowserPlugin({url: 'http://localhost:8080'})
         ]
     });
 }
@@ -68,6 +103,11 @@ if(TARGET === 'dev' || !TARGET) {
 if(TARGET === 'build' || TARGET === 'prod') {
 
     module.exports = merge(base, {
+        output: {
+            filename: '[name].[chunkhash].js',
+            path: PATHS.build,
+            chunkFilename: '[chunkhash].js'
+        },
         module: {
             loaders: [
                 {
@@ -77,15 +117,22 @@ if(TARGET === 'build' || TARGET === 'prod') {
             ]
         },
         plugins: [
-            extractSCSS,
-            new HtmlWebpackPlugin({
-                template: path.resolve(__dirname, "build/template.html"),
-            }),
+
             new CleanPlugin(['build'], {
-                root: path.resolve(__dirname,"./"),
-                verbose: true,
-                exclude: ['template.html','logo.png']
-            })
+                root: PATHS.root,
+                verbose: true
+            }),
+            extractSCSS,
+            new HtmlWebpackPlugin(Object.assign(htmlPluginDefine, {
+                baseHref:'/build/',
+                filename: 'index.html',
+            })),
+            new webpack.optimize.UglifyJsPlugin({
+                compress: {
+                    warnings: false
+                }
+            }),
+
         ]
     });
 }

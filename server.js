@@ -20,7 +20,8 @@ let locations = [
 ];
 
 // serve our static stuff like index.css
-app.use(express.static(path.join(__dirname, 'build')))
+//app.use(express.static(path.join(__dirname, 'build')))
+app.use(express.static(path.join(__dirname, './')))
 
 app.get("/api/locations", function(req,res) {
 

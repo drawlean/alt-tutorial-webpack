@@ -3,9 +3,15 @@ import "babel-polyfill";
 var ReactDOM = require('react-dom');
 import RootRouters from './RootRouters.jsx'
 
-import {browserHistory } from 'react-router'
+import { useRouterHistory, browserHistory} from 'react-router';
+import { createHistory, createHashHistory } from 'history';
+
+const defaultHistory = useRouterHistory(createHistory)({
+    queryKey: false,
+    //basename: '/'
+});
 
 ReactDOM.render(
-    <RootRouters history={browserHistory} />,
+    <RootRouters history={defaultHistory} />,
     document.getElementById('ReactApp')
 );

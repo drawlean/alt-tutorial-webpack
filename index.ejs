@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="utf-8">
+    <title><%= htmlWebpackPlugin.options.title || 'Webpack App'%></title>
+    <% if (htmlWebpackPlugin.options.baseHref) { %>
+      <base href="<%= htmlWebpackPlugin.options.baseHref %>" />
+    <% } %>
+
+    <% for (var css in htmlWebpackPlugin.files.css) { %>
+      <link href="<%= htmlWebpackPlugin.files.css[css] %>" rel="stylesheet">
+    <% } %>
+  </head>
+
+  <body>
+    <% if (htmlWebpackPlugin.options.appMountId) { %>
+      <div id="<%= htmlWebpackPlugin.options.appMountId%>"></div>
+    <% } %>
+
+    <% for (var chunk in htmlWebpackPlugin.files.chunks) { %>
+      <script src="<%= htmlWebpackPlugin.files.chunks[chunk].entry %>"></script>
+    <% } %>
+  </body>
+
+</html>
