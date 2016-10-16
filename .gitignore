@@ -1,4 +1,4 @@
 node_modules
 build
-src/config.Confidential.js
+src/config/Confidential.js
 
