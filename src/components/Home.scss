@@ -1,7 +1,24 @@
 @import '../libs/_rem.scss';
 
 .home {
+
+    &__avatar {
+        border-radius: 50%;
+        border: rem(19px) solid white;
+        margin: rem(5px) rem(20px);
+        height: rem(260px);
+        width: rem(260px);
+        background: #d3d3d3;
+        overflow: hidden;
+        float:right;
+        img {
+            width: 100%;
+            height: 100%;
+        }
+
+    }
     &__tab {
+
         &__li {
 
             list-style: none;

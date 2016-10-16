@@ -1,5 +1,10 @@
 var express = require('express')
 var path = require('path')
+import defaults from 'superagent-defaults';
+import superagentPromisePlugin from 'superagent-promise-plugin';
+import co from 'co';
+import confidential from "./src/config/Confidential";
+const request = superagentPromisePlugin(defaults());
 
 var app = express()
 
@@ -20,8 +25,8 @@ let locations = [
 ];
 
 // serve our static stuff like index.css
-//app.use(express.static(path.join(__dirname, 'build')))
-app.use(express.static(path.join(__dirname, './')))
+app.use(express.static(path.join(__dirname, 'build')))
+//app.use(express.static(path.join(__dirname, './')))
 
 app.get("/api/locations", function(req,res) {
 
@@ -39,6 +44,46 @@ app.get("/api/locations", function(req,res) {
       }
     }, 1000);
   });
+
+})
+
+app.get("/api/user_info", function(req,res) {
+
+	const code = req.query.code;
+    let tokenInfo = null;
+	let userInfo = null;
+    const getTokenUrl = `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${confidential.APP_ID}&secret=${confidential.APP_SECRET}&code=${code}&grant_type=authorization_code`;
+	console.log(getTokenUrl);
+
+
+    co ( function *() {
+        try {
+            let result = yield request.get(getTokenUrl);
+            tokenInfo = JSON.parse(result.text);
+        }catch (e) {
+            console.log("exception on getting access token");
+            tokenInfo = null;
+        }
+		console.log("token info:",tokenInfo);
+
+		if( tokenInfo != null ) {
+			const getUserInfoUrl = `https://api.weixin.qq.com/sns/userinfo?access_token=${tokenInfo.access_token}&openid=${tokenInfo.openid}&lang=zh_CN`;
+			try {
+				const result2 = yield request.get(getUserInfoUrl);
+				userInfo = JSON.parse(result2.text);
+			} catch(e) {
+				console.log("Exception on getting user info");
+				userInfo = null;
+			}
+			console.log("userInfo:",userInfo);
+		}
+		
+		if (userInfo) {
+			res.send(userInfo);
+		} else {
+			res.send("error");
+		}
+    })
 
 })
 

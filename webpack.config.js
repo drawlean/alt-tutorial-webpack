@@ -57,6 +57,7 @@ var base = {
     plugins: [
         new CopyWebpackPlugin([
             {from: "logo.png"},
+            {from: "ajax-loader.gif"},
         ]),
     ]
 };
@@ -124,7 +125,7 @@ if(TARGET === 'build' || TARGET === 'prod') {
             }),
             extractSCSS,
             new HtmlWebpackPlugin(Object.assign(htmlPluginDefine, {
-                baseHref:'/build/',
+                baseHref:'/',
                 filename: 'index.html',
             })),
             new webpack.optimize.UglifyJsPlugin({
