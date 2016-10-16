@@ -8,7 +8,6 @@ var Locations = require('./components/Locations.jsx');
 import { Router, Route,IndexRedirect,IndexRoute, browserHistory } from 'react-router'
 import Home from './components/Home.jsx'
 import About from './components/About.jsx'
-import UserInfo from './components/UserInfo.jsx';
 import WechatUserStore from './stores/WechatUserStore';
 var WechatUserActions = require('./actions/WechatUserActions');
 
