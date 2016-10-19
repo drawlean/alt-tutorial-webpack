@@ -34,7 +34,7 @@ const htmlPluginDefine = {
 
 var base = {
     entry: {
-        app: path.resolve(__dirname, 'src/App.jsx'),
+        app: path.resolve(__dirname, 'src/app/App.jsx'),
     },
     output: {
         filename: '[name].js',

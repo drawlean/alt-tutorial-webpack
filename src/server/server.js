@@ -3,8 +3,9 @@ var path = require('path')
 import defaults from 'superagent-defaults';
 import superagentPromisePlugin from 'superagent-promise-plugin';
 import co from 'co';
-import confidential from "./src/config/Confidential";
 const request = superagentPromisePlugin(defaults());
+var signature = require('./libs/signature');
+var wechat_cfg = require('./config/wechat.cfg');
 
 var app = express()
 
@@ -25,7 +26,7 @@ let locations = [
 ];
 
 // serve our static stuff like index.css
-app.use(express.static(path.join(__dirname, 'build')))
+app.use(express.static(path.join(__dirname, '../../build')))
 //app.use(express.static(path.join(__dirname, './')))
 
 app.get("/api/locations", function(req,res) {
@@ -47,12 +48,23 @@ app.get("/api/locations", function(req,res) {
 
 })
 
+app.get("/api/signature", function(req,res) {
+
+    const url = req.query.url.split('#')[0];
+
+    signature.sign(url,function(signatureMap){
+        signatureMap.appId = wechat_cfg.appid;
+        res.send(signatureMap);
+    });
+
+})
+
 app.get("/api/user_info", function(req,res) {
 
 	const code = req.query.code;
     let tokenInfo = null;
 	let userInfo = null;
-    const getTokenUrl = `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${confidential.APP_ID}&secret=${confidential.APP_SECRET}&code=${code}&grant_type=authorization_code`;
+    const getTokenUrl = `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${wechat_cfg.appid}&secret=${wechat_cfg.secret}&code=${code}&grant_type=authorization_code`;
 	console.log(getTokenUrl);
 
 
@@ -89,7 +101,7 @@ app.get("/api/user_info", function(req,res) {
 
 // send all requests to index.html so browserHistory works
 app.get('*', function (req, res) {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'))
+  res.sendFile(path.join(__dirname, '../../build', 'index.html'))
 })
 
 

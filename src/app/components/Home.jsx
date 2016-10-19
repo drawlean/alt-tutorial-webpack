@@ -15,6 +15,7 @@ class Headers extends React.Component{
             <div>
                 <nav >
                     <li className="home__tab__li"><Link to="/locations">名胜古迹</Link></li>
+                    <li className="home__tab__li"><Link to="/wechatsdk">微信sdk演示</Link></li>
                     <li className="home__tab__li"><Link to="/about">关于techgogogo</Link></li>
                 </nav>
             </div>

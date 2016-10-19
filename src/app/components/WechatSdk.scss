@@ -1,0 +1,25 @@
+@import '../libs/_rem.scss';
+
+.wechatsdk {
+
+    &__btn {
+        margin:rem(40px) auto;
+        width: 100%;
+        height: rem(160px);
+        border-radius: rem(40px);
+        font-size: rem(80px);
+        color: white;
+        border-width: 0;
+        //background: #FE8059;
+        box-shadow: 5px 5px 10px rgba(158,89,67,.1);
+        background: -webkit-gradient(linear, 0 50%, 50% 100%, from(#FE8059), to(#FBBB86));
+        font-family: "Microsoft Sans Serif";
+
+    }
+    h3 {
+        text-align: center;
+        font-family: "Microsoft Sans Serif";
+        font-size: rem(80px);
+        font-weight: rem(800px);
+    }
+}
