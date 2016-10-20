@@ -3,14 +3,6 @@ var request = require('request'),
 	sha1 = require('sha1'),
 	config = require('../config/wechat.cfg');
 
-const config = {
-	grant_type: 'client_credential',
-	appid: 'xxxx',
-	secret: "xxxxx",
-	noncestr:'Wm3WZYTPz0wzccnW',
-	accessTokenUrl:'https://api.weixin.qq.com/cgi-bin/token',
-	ticketUrl:'https://api.weixin.qq.com/cgi-bin/ticket/getticket',
-}
 exports.sign = function (url,callback) {
 	var noncestr = config.noncestr,
 		timestamp = Math.floor(Date.now()/1000), //精确到秒
