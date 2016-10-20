@@ -65,6 +65,8 @@ class RootRouters extends Component {
     //onEnter={this.wechatAuth.bind(this)}
     render() {
         const { history } = this.props;
+        console.log("this.props in root router:",this.props);
+
         return (
             <Router history = {history} >
                 <Route name='index' path ="/" onEnter={this.wechatAuth.bind(this)} component={Home} >
