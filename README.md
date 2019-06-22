@@ -552,5 +552,5 @@ npm install
 npm run dev
 
 
-[第五章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/05)
+[第五章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/04)
 
