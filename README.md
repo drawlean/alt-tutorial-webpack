@@ -262,10 +262,12 @@ new webpack.optimize.UglifyJsPlugin({
 
 ### 4. 源码
 
-> git clone https://github.com/kzlathander/alt-tutorial-webpack.git
+``` shell
+git clone https://github.com/kzlathander/alt-tutorial-webpack.git
 cd alt-tutorial-webpack
 git checkout 08
 npm install
 npm start
+```
 
 [第十一章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/09)
