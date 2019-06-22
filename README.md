@@ -539,4 +539,4 @@ npm install
 npm run prod
 ```
 
-[第十章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/07)
+[第十章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/08)
