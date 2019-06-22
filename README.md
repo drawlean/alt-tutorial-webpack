@@ -228,10 +228,12 @@ import "babel-polyfill";
 
 # 3. 源码获取
 
-> git clone https://github.com/kzlathander/alt-tutorial-webpack.git
+ ```
+ git clone https://github.com/kzlathander/alt-tutorial-webpack.git
 cd alt-tutorial-webpackgit 
 checkout 05
 npm install
 npm run prod
+```
 
 [第七章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/06)
