@@ -1,315 +1,548 @@
-# 第四章 小白学react之altjs下的Action和Store
+# 第五章 小白学react之React Router实战
 
 >天地会珠海分舵注:随着微信应用号的呼之欲出，相信新一轮的APP变革即将发生。作为行业内人士，我们很应该去拥抱这个趋势。其中Reactjs相信是开发webapp的佼佼者，这段时间将会通过改造官方实例alt-tutorial来学习Reactjs相关的知识。
 
-通过上一篇文章《[微信应用号开发知识贮备之打通React Component任督二脉](http://techgogogo.com/2016/09/altcontainer/)》我们学习了AltContainer是如何通过对Component职责的解绑，让Component的尽可能的关注在如何进行页面渲染的逻辑上去，而不需要去管该如何获取数据，该如何监听状态是否改变是否需要重新渲染的逻辑，从而让整个组件更容易重用。
+通过上一篇文章《[小白学react之altjs下的Action和Store](http://techgogogo.com/2016/09/altjs_action_store/)》我们学习了在alt框架下的Action和Store的特色，以及对alt-tutorial的代码做了重构，让其更简洁且各模块职责更分明。
 
-今天我们将会对altjs框架的Action和Store进行学习。同时会对alt-tutorial的代码进行重构，让其更简洁且职责分明。
+今天的计划是继续对alt-tutorial进行改造，通过实战来学习React Router的基本功能。
 
-# 1. alt Action
-## 1.1 flux Action vs. alt Action
+实战之前，建议大家如我一样先去阮一峰的网络日记《[React Router 使用教程](http://www.ruanyifeng.com/blog/2016/05/react_router.html?utm_source=tool.lu)》上学习React Router的基本知识，本篇我们说的更多是实战。
 
-上一篇我们接触的View是负责页面的渲染，而这一篇谈及的Action，在flux中则代表着一个命令，一个携带了数据的命令。这个命令会被View在适当的时候通知要发射，然后由Dispatcher发放出去，最后由监听的Store所接收处理。
 
-而在alt中，alt的Action事实上包含了以上的两个方面：
-- **flux意义上的Action**: 作为一个View和Store之间的命令和数据传递的载体
-- **flux意义上的Dispatcher**: 封装了Dispatcher的功能
+# 1. 主页面
 
-所以通过alt框架来编写项目的时候:
-- 我们根本不需要处理如何调用Dispatcher
-- 我们也不需要编写Dispatcher，因为alt的Store本身就包含了Dispatcher的功能
+首先我们要建立我们的导航主页面，因为页面代码不是我们今天的重点，所以不会作过多的解析。
 
-## 1.2. 从creatActions到generateActions
+我们先在src/components文件夹下新建文件Home.jsx，并添加以下代码:
 
-根据官方文档，alt提供了两个api来进行Action的创建:
-- createActions
-- generateActions
+``` jsx
 
-根据官方的API文档所阐述，它们有一定的联系和区别。
+import React from 'react'
+import { Link } from 'react-router'
 
-其中createActions：
-- 接受的是一个定义了各种Actions的Class作为参数。
-- 所定义的各个Action需要指定dispatch到store的数据。
+var Home = React.createClass({
+  render() {
+    return (
+      <div>
+        <h2>Reactjs之alt框架实战:</h2>
+        <ul >
+          <li><Link to="/locations">名胜古迹</Link></li>
+        </ul>
+      </div>
+    )
+  }
+})
 
-最终返回是：
-- 返回一个对象，该对象包含了所定义的所有Actions。
+module.exports = Home;
 
-我们的alt-tutorial其实就是用了这种方式来对Actions进行创建。我们打开源码src/LocationActions.js:
-``` js
-var alt = require('../alt');
-class LocationActions { 
-  updateLocations(locations) { return locations; } 
-  fetchLocations() { return null; } 
-  locationsFailed(errorMessage) { return errorMessage; } 
-  favoriteLocation(location) { return location; }}
+```
+ 
+这是一份很简单的代码，其中主要用到的是React Router的Link，其中"/Locations"就是点击该Link后要跳到的目的地址，这个地址会被下面谈及的路由所捕获，然后转向对应的页面。
 
-module.exports = alt.createActions(LocationActions);
+这个页面的渲染效果如下：
+![主页面.png](http://upload-images.jianshu.io/upload_images/264714-05ff7397444ecdc9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
+# 2. 路由
+
+## 2.1. 如何通过路由进入主页面
+
+按照之前学习的知识点，最简单的做法就是在我们的入口文件src/App.jsx中，直接将代码改成:
+``` jsx
+var React = require('react');
+var ReactDOM = require('react-dom');
+var Home = require('./components/Home.jsx');
+
+ReactDOM.render(
+    <Home />,
+    document.getElementById('ReactApp')
+);
+
 ```
 
-其实alt还提供了另外一种更简介的创建Actions的方式，那就是generateActions。通过这个api，我们不需要为各种Actions创建一个类，而只需要指定这些Actions的名字就好了，其它一切都会由alt来帮我们搞定。
+如果我们只是Home这个页面的话，这样做也没有什么问题。但是问题是我们这里在Home里面点击相应的链接，还需要跳转到Locations页面。如果这样写的话，我们怎么处理上面Link to="/Locations"中的跳转呢？
 
-相对createActions来说generateActions有这些特点：
-- 接受一个由Action名称组成的列表作为参数，而不是一个Class。
-- 不需要像createActions一样需要显式指定任何dispatch的数据，因为genreateActions内部已经帮我们处理好。
+所以这里我们就要引入React Router了，我们先看代码：
 
-可以看出来，使用genreateActions来创建Actions将会让代码更加简单。
+``` jsx
+var React = require('react');
+var ReactDOM = require('react-dom');
+var Home = require('./components/Home.jsx');
+import { Router, Route, browserHistory } from 'react-router'
 
-下面我们将上面的LocationActions的Actions创建方式从createActions改写成genreateActions:
-``` js
-var alt = require('../alt');
-module.exports = alt.generateActions( 
-'updateLocations', 
-'fetchLocations', 
-'locationsFailed', 
-'favoriteLocation');
+ReactDOM.render(
+    <Router history = {browserHistory} >
+        <route path ="/" component={Home} />
+    </Router>,
+    document.getElementById('ReactApp')
+);
+
 ```
-通过执行运行命令:
-``` bash
-npm run dev
+
+作为一个路由，无论是前端路由，后端路由，还是我们家里用到的物理路由，它无非是要解决一个人生哲学的问题：
+> 我来自哪里？我要到哪里去？
+
+只是在路由中，“我”要改成“访问”而已。上面的:
+- path: 代表用户访问的路径
+- component: 用户访问这个路径的时候，页面将会导向哪里？这里的目的地址就是React的一个组件
+
+这里其它的Router基础知识，如果大家不清楚的，我这里再强调一次，大家可以去查看阮一峰的网络日记《[React Router 使用教程](http://www.ruanyifeng.com/blog/2016/05/react_router.html?utm_source=tool.lu)》
+
+## 2.2 如何跳转到Locations页面
+
+通过上面的路由配置，我们顺利进入到了主页面。但是我们点击页面上的链接的时候，此时并不会进入到我们Locations页面，因为我们还没有配置相关的路由来处理这个跳转：
+
+
+![LocationRoutesNotFound.png](http://upload-images.jianshu.io/upload_images/264714-e18fbbb47391aa4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+跟上面的主页面配置一样，我们需要有一个路由来处理"/location"这个访问path。修改代码如下:
+
+``` jsx
+var React = require('react');
+var ReactDOM = require('react-dom');
+var Home = require('./components/Home.jsx');
+var Locations = require('./components/Locations.jsx');
+import { Router, Route, browserHistory } from 'react-router'
+
+ReactDOM.render(
+    <Router history = {browserHistory} >
+        <route path ="/" component={Home} />
+        <route path ="/locations" component={Locations} />
+    </Router>,
+    document.getElementById('ReactApp')
+);
+
 ```
-我们就可以看到最终的执行效果，和我们前几章描述的没有什么区别。
+这样的话，整个跳转流程我想应该是这样的：
+- 当用户在主页面http://localhost:8080 上点击链接的时候，会尝试跳转到http://localhost:8080/locations， 注意这是个内部跳转，所以并不会有任何请求发送到服务器，而是由浏览器端自己接收处理。
+- 我们的React Router在截获这个请求
+- React Router发现后面的path是"/loations"，我们刚好有个路由和它匹配上，然后就会跳转到component={Locations}，即Locations.jsx这个页面。
 
-## 1.3. Action全局标志符CONSTANT
-### 1.3.1. CONSTANT的作用
+# 2.3 如何共享同一个页面
 
-当alt的Dispatcher去dispatch一个action，以及当Store去监听一个action的时候，将需要用到这个action的一个全局标志符，官方叫法就是：constant。
+有时候我们的跳转只是希望在页面内部进行跳转，比如我希望能在Home和Locations这两个页面都共享一个标题“**Reactjs之alt框架实战:**”。
 
-> action.CONSTANTA constant is automatically available at creation time. This is a unique identifier for the constant that can be used for dispatching and listening.
+![主页面标题.png](http://upload-images.jianshu.io/upload_images/264714-950c1a348fd26ce8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-我们在下面说到Store的重构的时候将会谈及Store是如何通过一个action的全局标志符来监听这个action的。现在我们先看下这个constant大概长什么样子。假如有这样一个Action Class:
-``` js
-class MyActions { updateName() {}}
+点击链接进去Locations页面后显示同一个标题。
+
+![Locations页面标题.png](http://upload-images.jianshu.io/upload_images/264714-943f6e82582316d0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+那么按照我这种小白的思路，首先想到的就是在Locations.jsx页面的渲染render方法中也同样加上这个Home页面的标题：
+
+``` jsx
+var Locations = React.createClass({
+  componentDidMount() {
+    LocationStore.fetchLocations();
+  },
+
+  render() {
+    return (
+      <div>
+
+          <h2>Reactjs之alt框架实战:</h2>
+
+        <h1>Locations</h1>
+        <AltContainer store={LocationStore}>
+          <AllLocations />
+        </AltContainer>
+
+        <h1>Favorites</h1>
+        <AltContainer store={FavoritesStore}>
+          <Favorites />
+        </AltContainer>
+      </div>
+    );
+  }
+});
 ```
-创建MyActions后，我们在Store中监听这个action的时候就可以通过以下这种方式来唯一指定它：
-``` js
-myActions.UPDATE_NAME
-```
-其实我们将alt的createActions的返回值打印出来就能印证:
-![](http://upload-images.jianshu.io/upload_images/264714-b0d182bd349c18dc?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+如果只是两个页面共享这个标题的话，且共享的只是这么简单的一个标题的话，存在这样的冗余我觉得也没有问题。
 
-可以看到，每个action都会有自己的constant，且这个constant的值是由Class的类名跟上该action的名称组成的，如:
+但是如果要共享的是一堆复杂的页面组件，以及有大量的页面需要共享的话，那么这种代码的可维护难度就可想而知了。
+
+这是嵌套路由就派上用场了。
+
+为了更好的演示效果，我们这里增加多一个叫做About的页面。在src/component文件下新增加文件"About.jsx"，编写代码如下:
+
+``` jsx
+import React from 'react'
+import { Link } from 'react-router'
+
+var About = React.createClass({
+  render() {
+    return (
+      <div>
+        <h2>Techgogogo</h2>
+          他山之石，可以攻玉。主要分享海外最实用的创业，产品，创意，科技，技术等原创原译文章，以助你事业路上一路飞翔！虎嗅，搜狐自媒体，36氪，人人都是产品经理，经理人分享等媒体撰稿人。但，这里才是我们的大本营！
+      </div>
+    )
+  }
+})
+
+module.exports = About;
+```
+同时加多一个到About页面的链接到Home.jsx代码里面：
+
+``` jsx
+import React from 'react'
+import { Link } from 'react-router'
+
+var Home = React.createClass({
+  render() {
+    return (
+      <div>
+        <h2>Reactjs之alt框架实战:</h2>
+        <ul >
+          <li><Link to="/locations">名胜古迹</Link></li>
+            <li><Link to="/about">关于techgogogo</Link></li>
+        </ul>
+          
+      </div>
+    )
+  }
+})
+
+module.exports = Home;
+```
+然后将路由代码修改如下:
+
+``` jsx
+var React = require('react');
+var ReactDOM = require('react-dom');
+var Home = require('./components/Home.jsx');
+var Locations = require('./components/Locations.jsx');
+var About = require('./components/About.jsx');
+import { Router, Route, browserHistory } from 'react-router'
+
+ReactDOM.render(
+    <Router history = {browserHistory} >
+        <route path ="/" component={Home} >
+            <route path ="/about" component={About} />
+            <route path ="/locations" component={Locations} />
+        </route>
+    </Router>,
+    document.getElementById('ReactApp')
+);
+
+```
+这里我们可以看到路由的代码不再是平行的，现在Home的路由变成了About和Locatioins路由的父层级。
+
+这种嵌套路由的意义就是，当访问到"/about"或者"/locations"页面的时候，会先加载Home页面，然后再在Home页面里面加载"/home"或者“/locations"组件。
+
+这时我们去主页面点击About的链接，发现只有url发生变化，而页面并没有任何变化：
+
+![about_link_no_redirect.png](http://upload-images.jianshu.io/upload_images/264714-abe18e16ad059a40.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+这是因为在访问"/about"的时候，我们会先加载"/"，也就是Home页面，然后再尝试在Home页面加载About页面，但是，这时我们的Home页面并没有代码去指导About该如何加载。
+
+所以我们还需要在Home.jsx中加入如何指导子组件加载的代码：
+
+``` jsx
+import React from 'react'
+import { Link } from 'react-router'
+
+var Home = React.createClass({
+  render() {
+    return (
+      <div>
+        <h2>Reactjs之alt框架实战:</h2>
+        <ul >
+          <li><Link to="/locations">名胜古迹</Link></li>
+            <li><Link to="/about">关于techgogogo</Link></li>
+        </ul>
+          {this.props.children}
+      </div>
+    )
+  }
+})
+
+module.exports = Home;
+```
+
+这里就是加入了{this.props.children}。子组件这个时候就会作为一个Home组件的一个props被传进来，然后在最后面的位置进行渲染。
+
+所以在主页面点击链接进入About的流程就是:
+
+- 进入Home主页面
+- 点击About链接
+- "/about"路由被React Router收到
+- "/about"路由对应的About组件被作为Home的一个props传到Home组件
+- Home组件先进行自身的渲染
+- Home组件取出this.props.children，即About子组件，指导其进行渲染
+
+最终的效果就是:
+
+![About嵌套路由.png](http://upload-images.jianshu.io/upload_images/264714-63976317cb2c8d34.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+点击Locations的链接的效果就是:
+
+![Locations嵌套路由.png](http://upload-images.jianshu.io/upload_images/264714-127cf5ac6bc251e4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+最后我们把共享部分整理一下，将两个链接整理成一个导航栏。修改Home.jsx的代码如下:
+
+``` jsx
+import React from 'react'
+import { Link } from 'react-router'
+
+var Home = React.createClass({
+  render() {
+    return (
+      <div>
+          <nav>
+            <Link to="/locations">名胜古迹</Link> |
+            <Link to="/about">关于techgogogo</Link>
+            {this.props.children}
+          </nav>
+      </div>
+    )
+  }
+})
+
+module.exports = Home;
+```
+
+这时运行的效果如下:
+
+![导航主页面.png](http://upload-images.jianshu.io/upload_images/264714-561b72d930c273b7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+点击“名胜古迹”这个Locations链接:
+
+![Locations导航页面.png](http://upload-images.jianshu.io/upload_images/264714-c69f008332b55222.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+## 2.4. IndexRoute指定加载默认子组件
+
+以上页面美中不足之处是，在运行的是否主页面只是显示了一个导航栏。如果在访问根目录的时候，我们能指定默认的一个子组件，比如About页面，那么用户打开我们的网站时就不会这么单调了。
+
+此时IndexRoute就被派上用场了。IndexRoute的用处就是指定根路由的默认加载组件。
+
+下面我们就将App.jsx的代码修改下，加入IndexRoute的支持，让在访问根路由的时候能自动加载About子组件到Home里面：
+
+``` jsx
+var React = require('react');
+var ReactDOM = require('react-dom');
+var Home = require('./components/Home.jsx');
+var Locations = require('./components/Locations.jsx');
+var About = require('./components/About.jsx');
+var Children = require('./components/Children.jsx');
+import { IndexRoute, Router, Route, browserHistory } from 'react-router'
+
+ReactDOM.render(
+    <Router history = {browserHistory} >
+        <route path ="/" component={Home} >
+            <IndexRoute  component={About} />
+            <route path ="/about" component={About} />
+            <route path ="/locations" component={Locations} />
+        </route>
+    </Router>,
+    document.getElementById('ReactApp')
+);
+
+```
+这时打开页面http://localhost:8080 的时候，我们可以看到About子组件会自动加载到Home页面的下方。跟点击About链接时候没有任何区别，除了URL还是显示处于跟路由位置之外。
+
+![指定主页面默认子组件.png](http://upload-images.jianshu.io/upload_images/264714-d10a107ecbadcf78.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+## 2.5. IndexRedirect指定跳转到默认子组件
+
+那么我们是否可以在打开http://localhost:8080 的时候，直接跳转到About页面，而不是直接将其加载到Home页面呢？让整个体验跟用户真正点击了About这个链接一样。
+
+答案当然是可以的，通过IndexRedirect就可以办到。下面我们将App.jsx修改下：
+``` jsx
+var React = require('react');
+var ReactDOM = require('react-dom');
+var Home = require('./components/Home.jsx');
+var Locations = require('./components/Locations.jsx');
+var About = require('./components/About.jsx');
+var Children = require('./components/Children.jsx');
+import {IndexRedirect, IndexRoute, Router, Route, browserHistory } from 'react-router'
+
+ReactDOM.render(
+    <Router history = {browserHistory} >
+        <route path ="/" component={Home} >
+            <IndexRedirect  to="/about" />
+            <route path ="/about" component={About} />
+            <route path ="/locations" component={Locations} />
+        </route>
+    </Router>,
+    document.getElementById('ReactApp')
+);
+
+```
+然后进入根路由页面http://localhost:8080:
+![IndexRedirectToAbout.png](http://upload-images.jianshu.io/upload_images/264714-f0ae101e21828554.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+我们可以看到整个页面与上面的在Home页面加载About子组件没有什么区别，但是这次的URL会自动变成http://localhost:8080/about, 而不是上面的http://localhost:8080。
+
+## 2.6. 路由组件
+
+App.jsx文件本来是我们的alt-tutorial的入口文件，但是经过上面的一些改造，它现在变得更像是一个路由文件了。
+
+由入口文件来负责路由的职责感觉总不对劲，且我们应该尽量保证代码的可读性。
+
+因为Router本身就是一个组件，其实我们完全可以将我们的路由代码抽出来，建立成一个独立的路由组件，然后我们在App.jsx中直接作为组件来用就好了。
+
+我们现在src目录下创建一个RootRouters.jsx文件，编写代码如下:
+
+``` jsx
+/**
+ * Created by apple on 9/27/16.
+ */
+
+import React, {PropTypes, Component} from 'react';
+//import {Router, Route, IndexRoute, withRouter} from 'react-router';
+var Locations = require('./components/Locations.jsx');
+import { Router, Route,IndexRedirect,IndexRoute, browserHistory } from 'react-router'
+import Home from './components/Home.jsx'
+import About from './components/About.jsx'
+
+class RootRouters extends Component {
+
+    render() {
+        const { history } = this.props;
+        return (
+            <Router history = {browserHistory} >
+                <Route path ="/" component={Home} >
+                    <IndexRoute  component={About}/>
+                    <Route path ="/about" component={About} />
+                    <Route path ="/locations" component={Locations} />
+                </Route>
+            </Router>
+        );
+    }
+}
+
+export default RootRouters;
+
+```
+然后在App.jsx中import这个RootRouters进来，直接作为一个组件来使用，这样整个代码就保持原来的整洁了：
+
+``` jsx
+var React = require('react');
+var ReactDOM = require('react-dom');
+import RootRouters from './RootRouters.jsx'
+
+import {browserHistory } from 'react-router'
+
+ReactDOM.render(
+    <RootRouters history={browserHistory} />,
+    document.getElementById('ReactApp')
+);
+
+```
+
+# 3. 解决BrowserHistory导致的404错误
+
+当我们点击About链接，进入About页面之后，这时如果我们刷新页面，页面将会出错，服务器将会返回一个404 Page Not Found的错误：
+
+![404.png](http://upload-images.jianshu.io/upload_images/264714-e0e09d1d4130f708.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+这里的原因是我们代码中的React Router使用的是BrowerHistory， 当我们在"/about"路由下面刷新页面的时候：
+- 浏览器会向服务器请求"/about"页面
+- 因为我们用的是webpack-dev-server，默认是没有作特殊处理的，所以服务器会尝试去寻找网页服务器根目录下(我们package.json上面设置的根目录是./build: "dev": "webpack-dev-server  --inline --devtool eval --progress --colors --hot --content-base ./build")的about.html文件。因为这个页面是由React通过浏览器渲染出来，所以当然不可能在服务器上找得到了。所以这个时候服务器就会返回一个404 Page Not Found错误。
+
+这里我们有两种解决方案：
+- 第一种就是通过参数修改webpack-dev-server的运行方式，让其能处理这种情况
+- 另外一种就是我们自己编写一个基于Express的http服务器来处理这种情况
+
+## 3.1. 通过修改webpack-dev-server运行方式来解决
+
+这个解决方法很简单，直接在运行时加入参数“--history-api-fallback”就ok了。我们修改package.json相关的代码:
+
 ``` json
-FAVORITE_LOCATION: "LocationActions.favoriteLocation"
+ "scripts": {
+    "build": "webpack",
+    "dev": "webpack-dev-server  --inline --devtool eval --progress --colors --hot --content-base ./build --history-api-fallback"
+  },
 ```
-所以我们的Store在监听的时候既可以使用locationActions.FAVORITE_LOCATION的方式来指定要监听的action，也可以直接指定它的值“LocationActions.favoriteLocation"，其中LocationActions又叫做这个action的命名空间(namespace)。
 
-但是，我们通过alt的generateActions来创建Actions时并没有指定一个Class，那么何来的类名呢？那么它的namespace又是怎样的呢？同样，我们可以将generateActions的返回值打印出来:
-![](http://upload-images.jianshu.io/upload_images/264714-770f8aa1688c6bef?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-从中我们可以看到，alt会自动用“global“作为每个action的constant的值的namespace。
+## 3.2. 自建Express服务器来解决
 
-### 1.3.2. Constant的命名规则
+通过上面的分析，我们知道错误发生的原因是服务器端不存在真正的"/about.html"文件，这个只是浏览器页面内的跳转。
 
-那么Action的全局标志符constant的命名规则是怎样的呢？这里我们可以分析下其源码:
-``` js 
-function formatAsConstant(name) { 
-  return name.replace(/[a-z]([A-Z])/g, function (i) { 
-    return String(i[0]) + '_' + String(i[1].toLowerCase()); 
-  }).toUpperCase(); 
-}
+因为我们的React Router会自动检测url的变化，所以如果我们在服务器端无论对什么请求都将index.html返回的话，浏览器就能根据url当前的位置来进行页面内的跳转。
+
+在http://localhost:8080/about 位置进行刷新的交互流程就会变成这样:
+
+- 刷新http://localhost:8080/about 页面
+- 服务器收到请求
+- 服务器将index.html页面返回给浏览器客户端
+- 浏览器开始加载index.html页面。 index.html的代码如下:
+ ``` html
+<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <div id="ReactApp"></div>
+  </body>
+  <script src="bundle.js"></script>
+</html>
 ```
-其中接受的输入参数就是aciton的名称，比如"updateLocations"。
-
-该函数的意义就是，通过正则表达式来比对输入参数，每当发现输入参数字串中小写字母后面出现大写字母的，就在它们之间插入一个下划线"_"， 然后将整个调整后的字串转成大写。
-
-所以，如果输入的是“updateLocations“，那么输出的结果就是"UPDATE_LOCATIONS"；如果输入的是“updateLocationsSuccess"，输出的就是“UPDATE_LOCATIONS_SUCCESS"。
-
-## 1.4. Dispatch Actions
-
-从flux的数据流程示意图来看，我们可以看到Action是由Dispatcher给dispatch给Store的。![](http://upload-images.jianshu.io/upload_images/264714-5d38b641514f4958?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)但是纵观我们的alt-tutorial的代码，并没有看到有相关调用dispatch的地方。其实这就是alt强大的地方，通过跟踪代码，我们可以看到在createActions和generateActions的过程中，alt就已经为我们创建好整一套dispatch的code，我们只需要调用创建Actions后返回对象中相应的action函数就能完成action的dispatch：
-![](http://upload-images.jianshu.io/upload_images/264714-4de40d339d30644c?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-源码在node_modules/alt/lib/actions/index.js：
+- index.html页面的script bundle.js进入到入口组件，而这个组件事实上就是我们的路由文件App.jsx的代码。入口在webpack.config.js中我们已经指定:
 ``` js
-function makeAction(alt, namespace, name, implementation, obj) { 
-... 
-var dispatch = function dispatch(payload) { 
-  return alt.dispatch(id, payload, data);
- }; 
-// the action itself 
-var action = function action() {
- ... 
-// async functions that return promises should not be dispatched 
-if (invocationResult !== undefined && !(0, _isPromise2['default'])(invocationResult)) {
- ... 
-} else { dispatch(invocationResult); } } 
-... 
-return actionResult; }; 
-... 
-// generate a constant 
-var constant = utils.formatAsConstant(namespaceId); container[constant] = id; return action;}
+entry: [    path.resolve(__dirname, 'src/App.jsx'),],
 ```
+- 路由解析到当前url是在"/about"下面，和路由的"/about"匹配
+- 浏览器开始About页面的渲染流程...
 
-以上代码我尽量把不相关的部分都省略掉了，所以，从理解上来说应该还算直观。整个逻辑就是为一个action创建一个函数引用(就是代码中action那个function，最终通过createActions或者generateActions返回)，该函数会把传入到该action的参数通过alt.dispatch分发出去。该方法最后还通过上面分析的formatAsConstant来生成对应Action的CONSTANT并保存起来。
+所以我们这里需要做的就是建立一个Express的http服务器，然后将所有路径的访问都以index.html作为返回。我们在项目根目录下建立server.js文件，根据官网例子修改代码如下:
 
-# 2. alt Store
-
-alt Action负责命令和数据的构建，以及将数据dispatch出去。那么，谁来接收并处理这些数据呢？这就是Store要做的事情了。总体来说，alt的Store和flux规范的Store并没有太大的区别，主要做的事情就是:- 监听Action- 当Action过来时，进行相应的处理
-
-# 2.1. bindListeners vs. bindAction
-
-alt框架提供了两个监听Action的方式，一个就是bindListeners，另外一个就是bindActions。官方的alt-tutorial实例用的就是第一种方式:
 ``` js
-var alt = require('../alt');
-var LocationActions = require('../actions/LocationActions');
-...
-class LocationStore { 
-  constructor() { 
-    this.locations = []; 
-    this.errorMessage = null; 
-    this.bindListeners({ 
-      handleUpdateLocations: LocationActions.UPDATE_LOCATIONS, 
-      handleFetchLocations: LocationActions.FETCH_LOCATIONS, 
-      handleLocationsFailed: LocationActions.LOCATIONS_FAILED,     
-      setFavorites: LocationActions.FAVORITE_LOCATION }); 
-... 
-} 
-handleUpdateLocations(locations) { 
-  this.locations = locations;
-  this.errorMessage = null; } 
-  ...
-}
-module.exports = alt.createStore(LocationStore, 'LocationStore');
+var express = require('express')
+var path = require('path')
+
+var app = express()
+
+// serve our static stuff like index.css
+app.use(express.static(path.join(__dirname, 'build')))
+
+// send all requests to index.html so browserHistory works
+app.get('*', function (req, res) {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'))
+})
+
+var PORT = 8080
+app.listen(PORT, function() {
+  console.log('Production Express server running at localhost:' + PORT)
+})
 ```
 
-从代码中可以看到，bindListeners接受的是一个由键值对组成的列表，其中的键是aciton的处理函数，而值就是我们上面提到的该action的CONSTANT这个Action的唯一标志符。
+代码量非常少，这也是Express的强大之处了。整个流程就是：
+- 建立express服务器对象
+- 指定http服务器的根目录，这里就是我们的build文件夹
+- 通过正则表达式建立一个对所有请求进行监听的路由，一旦发现有请求过来就将index.html给返回去请求客户端
+- 指定express服务器的监听端口为8080
 
-通过bindListeners，我们可以:
-- 很灵活的指定一个action应该由哪个handler来处理，
-- 且这些handler的名字可以自由发挥。
-
-除了bindListeners，alt还提供了另外一个方法来简化我们的监听代码，那就是bindActions。
-
-相比bindListeners，bindActions有这些特性：
-- 输入的是通过上面的createActions或者generateActions返回的Actions对象
-- 每个Action的handler的名称必须要满足规则："on" + Action的名称；或者直接是：Action的名称。比如updateLocations这个Action， 在Store中的处理函数handler的名称就只能写成onUpdateLocations或者updateLocations，而不能像binListener那样随性发挥。
-
-## 2.2. Store代码重构
-
-所以最终我们可以将以上LocationStore的的代码重构一下：
-``` js
-var alt = require('../alt');
-var LocationActions = require('../actions/LocationActions');
-...
-class LocationStore { 
-  constructor() { 
-    this.locations = []; 
-    this.errorMessage = null; 
-    this.bindActions(LocationActions); 
-... 
-} 
-onUpdateLocations(locations) { 
-  this.locations = locations; 
-  this.errorMessage = null; } 
-  ...
-}
-module.exports = alt.createStore(LocationStore, 'LocationStore');
+跟着我们需要将package.json修改一下，加入一个“prod”的运行选项来在build完后启动express服务器:
+``` json
+  "scripts": {
+    "build": "webpack",
+    "dev": "webpack-dev-server  --inline --devtool eval --progress --colors --hot --content-base ./build --history-api-fallback",
+    "prod": "npm run build & node server.js"
+  },
 ```
-这样看上去就会简洁很多。
 
-## 2.3. alt Store的getter
+当然，运行"npm run prod"之前别忘记先把express的依赖给安装上:
 
-通常我们获取一个Store的数据是通过store的实例调用getState这个reactjs方法，将所有的数据都取回来。但我们经常需要像getter一样从Store中获取一些指定的数据，这个时候怎么办呢？
-
-### 2.3.1 exportPublicMethods
-
-你要知道，通过alt建立的Store类的成员函数默认是没有暴露出来的。
-
-我们可以将alt-tutorial中LocationStore的创建结果打印出来作为印证：
-``` js
-var alt = require('../alt');
-var LocationActions = require('../actions/LocationActions');
-var LocationSource = require('../sources/LocationSource');
-var FavoritesStore = require('./FavoritesStore');
-class LocationStore { 
-constructor() { 
-    this.locations = []; 
-    this.errorMessage = null; 
-    this.bindActions(LocationActions); 
-    this.exportPublicMethods({ getLocation: this.getLocation }); 
-    this.exportAsync(LocationSource); } 
-onUpdateLocations(locations) { 
-    this.locations = locations; 
-    this.errorMessage = null; 
-} 
-onFetchLocations() { 
-    this.locations = []; 
-} 
-onLocationsFailed(errorMessage) { 
-  this.errorMessage = errorMessage; 
-} 
-resetAllFavorites() { 
-  this.locations = this.locations.map((location) => { return { id: location.id, name: location.name, has_favorite: false }; }); 
-} 
-onSetFavorites(location) { 
-  this.waitFor(FavoritesStore); 
-  var favoritedLocations = FavoritesStore.getState().locations; 
-  this.resetAllFavorites(); 
-  favoritedLocations.forEach((location) => { 
-  // find each location in the array 
-  for (var i = 0; i < this.locations.length; i += 1) { 
-  // set has_favorite to true 
-  if (this.locations[i].id === location.id) { 
-    this.locations[i].has_favorite = true; break; } } }); 
-} 
-getLocation(id) { 
-  var { locations } = this.getState(); 
-  for (var i = 0; i < locations.length; i += 1) { if (locations[i].id === id) { return locations[i]; } } return null; }
-}
-let myStore = alt.createStore(LocationStore, 'LocationStore');
-console.log("myStore:",myStore);
-module.exports = myStore;
+``` bash
+npm install elxpress --save-dev
 ```
-通过Chrome的开发者调试工具，我们看下打印的结果：
-![](http://upload-images.jianshu.io/upload_images/264714-ac3cfec2df788c8f?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-从中我们可以看到，LocationStore中定义的成员方法onSetFavorites等都是没有暴露出来的。但是，getLocation这个成员方法是有暴露出来的，这里的关键就是exportPublicMethods这个方法:
-``` js 
-this.exportPublicMethods({ getLocation: this.getLocation });
-```
-这个方法的作用就是将Store的一个成员方法(左边的this.getLocation)暴露出去(暴露成左边的getLocation方法)。
+# 4. 小结
 
-### 2.3.2. Source的exportAsync 和 registerAsync
+这里给自己做个小结以便今后回溯:
+- Router本身就是个组件。
+- 我们可以将Router放在一个独立的组件文件中，然后在入口文件中import进来作为一个组件来使用，以保持应用入口文件的简洁和职责单一
+- 通过嵌套路由可以实现如导航栏等的各个子组件共享的页面
+- 通过IndexRouter可以指定一个父级路由的默认加载子组件
+- BrowserHistory导致的404错误的服务器端处理方法是捕获所有请求，然后将index.html模版文件返回给客户端，由客户端来处理路由的跳转
 
-从上面的图片我们可以看到，创建 LocationStore返回的对象中除了暴露出来一个 getLocation的成员方法，还暴露出来一个fectchLocations的成员方法。事实上这个成员方法是一个异步数据获取的方法，在alt框架中还专门把它们归类叫做Source。
-
-下面就是LocationStore用到的数据源LocationSource的实现:
-``` js
-var LocationSource = { 
-  fetchLocations() { return { 
-    remote() { 
-      return new Promise(function (resolve, reject) { 
-    // simulate an asynchronous flow where data is fetched on 
-    // a remote server somewhere. 
-    setTimeout(function () { 
-      // change this to `false` to see the error action being handled. 
-      if (true) { 
-        // resolve with some mock data 
-      resolve(mockData); } 
-    else { reject('Things have broken'); } }, 250); }); }, 
-
-    local() { 
-      // Never check locally, always fetch remotely. 
-      return null; 
-    }, 
-    success: LocationActions.updateLocations, 
-    error: LocationActions.locationsFailed, 
-    loading: LocationActions.fetchLocations } }};
-```
-对于数据的Source，更详尽的描述请参考官网：http://alt.js.org/docs/async/。 这里我只是想指出，将fetchLocations这个source中获取远程数据的方法，作为LocationStore的一个成员方法暴露出去的关键代码就是LocationStore的构造函数中：
-``` js
-this.exportAsync(LocationSource);
-```
-alt除了提供exportAsync方法让我们将一个获取远程数据的一部方法暴露出去之外，还提供一个叫做registerAsync的方法。事实上这个方法的使用方式是一样的，究竟要用哪个，那就看个人喜好了。
-
-# 3. 源码获取
-
-除了上面的一些改动，我还将alt-tutorial上面原来的LocationActions分成了LocationActions和FavoriteActions，前者负责页面上面的所有Locaitons的命令构建和派送，后者负责页面下面的Favorite Locations的命令构建和派送。最终的代码大家可以从https://github.com/kzlathander/alt-tutorial-webpack.git中获得。
+# 5. 源码下载
 
 > git clone https://github.com/kzlathander/alt-tutorial-webpack.git
 cd alt-tutorial-webpackgit 
-checkout 03
+checkout 04
 npm install
 npm run dev
 
-
-[第五章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/05)
+[第六章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/05)
