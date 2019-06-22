@@ -559,11 +559,13 @@ module.exports = Home;
 
 ### 5. 源码
 
-> git clone https://github.com/kzlathander/alt-tutorial-webpack.git
+``` shell
+git clone https://github.com/kzlathander/alt-tutorial-webpack.git
 cd alt-tutorial-webpackgit
 checkout 05
 npm install
 npm run dev
+```
 
 [第八章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/06)
 
