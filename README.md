@@ -1,4 +1,4 @@
-# 第十一章 小白学react之EJS模版实战
+# 第十章 小白学react之EJS模版实战
 
 ![react-webpack.png](http://upload-images.jianshu.io/upload_images/264714-54b94b0e2dfda2a9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
