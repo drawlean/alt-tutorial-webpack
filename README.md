@@ -539,10 +539,12 @@ npm install elxpress --save-dev
 
 # 5. 源码下载
 
-> git clone https://github.com/kzlathander/alt-tutorial-webpack.git
+``` shell
+git clone https://github.com/kzlathander/alt-tutorial-webpack.git
 cd alt-tutorial-webpackgit 
 checkout 04
 npm install
 npm run dev
+```
 
 [第六章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/05)
