@@ -1,14 +1,13 @@
-# Alt Tutorial
-
-## Getting Started
-
-```bash
-git clone https://github.com/goatslacker/alt-tutorial.git
-cd alt-tutorial
-npm install
-npm start
-```
-
-## License
-
-MIT
+小白学react系列教程
+- [第一章 小白学react之altjs官方实例初探](https://github.com/zhubaitian/alt-tutorial-webpack/tree/01)
+- [第二章 小白学react之Webpack实战](https://github.com/zhubaitian/alt-tutorial-webpack/tree/02)
+- [第三章 小白学react之打通React Component任督二脉](https://github.com/zhubaitian/alt-tutorial-webpack/tree/03)
+- [第四章 小白学react之altjs下的Action和Store](https://github.com/zhubaitian/alt-tutorial-webpack/tree/03)
+- [第五章 小白学react之React Router实战](https://github.com/zhubaitian/alt-tutorial-webpack/tree/04)
+- [第六章 小白学react之restful api获取服务器数据实战](https://github.com/zhubaitian/alt-tutorial-webpack/tree/05)
+- [第七章 小白学react之SASS实战](https://github.com/zhubaitian/alt-tutorial-webpack/tree/05)
+- [第八章 小白学react之页面BaseLayout框架及微信的坑](https://github.com/zhubaitian/alt-tutorial-webpack/tree/06)
+- [第九章 小白学react之由FOUC引发的一次webpack变革](https://github.com/zhubaitian/alt-tutorial-webpack/tree/07)
+- [第十章 小白学react之EJS模版实战](https://github.com/zhubaitian/alt-tutorial-webpack/tree/08)
+- [第十一章 小白学react之网页获取微信用户信息](https://github.com/zhubaitian/alt-tutorial-webpack/tree/09)
+- [第十二章 小白学react之调用微信jssdk实战](https://github.com/zhubaitian/alt-tutorial-webpack/tree/10)
