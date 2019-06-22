@@ -1,4 +1,4 @@
-# 第十二章 小白学react之网页获取微信用户信息
+# 第十一章 小白学react之网页获取微信用户信息
 
 ![react-webpack.png](http://upload-images.jianshu.io/upload_images/264714-54b94b0e2dfda2a9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
