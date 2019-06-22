@@ -287,10 +287,11 @@ github地址：https://github.com/kzlathander/alt-tutorial-webpack.git
 - flux基本概念：请参考阮一峰的《[React 入门实例教程](http://www.ruanyifeng.com/blog/2015/03/react.html)》
 
 # 11 运行
-git clone https://github.com/kzlathander/alt-tutorial-webpack.git
-cd alt-tutorial-webpack
-git checkout 01
-npm install
-npm start
+
+- git clone https://github.com/kzlathander/alt-tutorial-webpack.git
+- cd alt-tutorial-webpack
+- git checkout 01
+- npm install
+- npm start
 
 [第二章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/02)
