@@ -1,161 +1,315 @@
-# 第四章 小白学react之Webpack实战
+# 第四章 小白学react之altjs下的Action和Store
 
-![](http://upload-images.jianshu.io/upload_images/264714-5abd27079248ebc7?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
->*天地会珠海分舵注:随着微信应用号的呼之欲出，相信新一轮的APP变革即将发生。作为行业内人士，我们很应该去拥抱这个趋势。这段时间在忙完工作之余准备储备一下这方面的知识点，以免将来被微信应用号的浪潮所淹没*
+>天地会珠海分舵注:随着微信应用号的呼之欲出，相信新一轮的APP变革即将发生。作为行业内人士，我们很应该去拥抱这个趋势。其中Reactjs相信是开发webapp的佼佼者，这段时间将会通过改造官方实例alt-tutorial来学习Reactjs相关的知识。
 
-通过上一篇《[微信应用号开发知识贮备之altjs官方实例初探](http://techgogogo.com/2016/09/altjs_tutorial_upgrade/)》，我们已经将altjs的官方实例所用到的依赖包升到最新，且修改的源码相应的部分来适应最新的依赖。
+通过上一篇文章《[微信应用号开发知识贮备之打通React Component任督二脉](http://techgogogo.com/2016/09/altcontainer/)》我们学习了AltContainer是如何通过对Component职责的解绑，让Component的尽可能的关注在如何进行页面渲染的逻辑上去，而不需要去管该如何获取数据，该如何监听状态是否改变是否需要重新渲染的逻辑，从而让整个组件更容易重用。
 
-今天本人的目标是将实例中的打包工具从browserify切换到当前更火的更接近nodejs编写习惯的weback上来。既然要用wepack，那么当然就需要去学习一下weback相关的基本知识了。
+今天我们将会对altjs框架的Action和Store进行学习。同时会对alt-tutorial的代码进行重构，让其更简洁且职责分明。
 
-因为altjs的官方实例不复杂，所以有针对性的学习需要用到的webpack功能，够用就好。至于今后需要扩展的，另外开篇再说。
+# 1. alt Action
+## 1.1 flux Action vs. alt Action
 
-# 1. weback 配置文件简介
+上一篇我们接触的View是负责页面的渲染，而这一篇谈及的Action，在flux中则代表着一个命令，一个携带了数据的命令。这个命令会被View在适当的时候通知要发射，然后由Dispatcher发放出去，最后由监听的Store所接收处理。
 
-根据webpack官网的说法，Webpack 是当下最热门的前端资源模块化管理和打包工具。它可以将许多松散的模块按照依赖和规则打包成符合生产环境部署的前端资源。还可以将按需加载的模块进行代码分隔，等到实际需要的时候再异步加载。通过 loader 的转换，任何形式的资源都可以视作模块，比如 ES6 模块、CSS、图片、 JSON等。其实无论是哪种打包工具，最终的目的就是将所有依赖打包到相应的一个或者多个独立的文件上来。
+而在alt中，alt的Action事实上包含了以上的两个方面：
+- **flux意义上的Action**: 作为一个View和Store之间的命令和数据传递的载体
+- **flux意义上的Dispatcher**: 封装了Dispatcher的功能
 
-比如以我们官方的altjs-tutorial项目为例，我么可以看到顶层的入口index.html代码非常简单:
-``` html
-<!doctype html>
-<html> 
-<head>
- </head> 
-<body> 
-<div id="ReactApp"></div>
- </body> 
-<script src="build/app.js"></script>
-</html>
+所以通过alt框架来编写项目的时候:
+- 我们根本不需要处理如何调用Dispatcher
+- 我们也不需要编写Dispatcher，因为alt的Store本身就包含了Dispatcher的功能
+
+## 1.2. 从creatActions到generateActions
+
+根据官方文档，alt提供了两个api来进行Action的创建:
+- createActions
+- generateActions
+
+根据官方的API文档所阐述，它们有一定的联系和区别。
+
+其中createActions：
+- 接受的是一个定义了各种Actions的Class作为参数。
+- 所定义的各个Action需要指定dispatch到store的数据。
+
+最终返回是：
+- 返回一个对象，该对象包含了所定义的所有Actions。
+
+我们的alt-tutorial其实就是用了这种方式来对Actions进行创建。我们打开源码src/LocationActions.js:
+``` js
+var alt = require('../alt');
+class LocationActions { 
+  updateLocations(locations) { return locations; } 
+  fetchLocations() { return null; } 
+  locationsFailed(errorMessage) { return errorMessage; } 
+  favoriteLocation(location) { return location; }}
+
+module.exports = alt.createActions(LocationActions);
 ```
-最终使用到的脚本其实就是build/app.js这个bundle文件，而这个文件就是通过package.json中指定的browserify命令打包而成的:
-``` json 
-"scripts": { 
-"build": "browserify -t [reactify --es6] src/App.jsx > build/app.js", 
-"start": "npm run build && open 'index.html' " },
 
+其实alt还提供了另外一种更简介的创建Actions的方式，那就是generateActions。通过这个api，我们不需要为各种Actions创建一个类，而只需要指定这些Actions的名字就好了，其它一切都会由alt来帮我们搞定。
+
+相对createActions来说generateActions有这些特点：
+- 接受一个由Action名称组成的列表作为参数，而不是一个Class。
+- 不需要像createActions一样需要显式指定任何dispatch的数据，因为genreateActions内部已经帮我们处理好。
+
+可以看出来，使用genreateActions来创建Actions将会让代码更加简单。
+
+下面我们将上面的LocationActions的Actions创建方式从createActions改写成genreateActions:
+``` js
+var alt = require('../alt');
+module.exports = alt.generateActions( 
+'updateLocations', 
+'fetchLocations', 
+'locationsFailed', 
+'favoriteLocation');
 ```
-其实webpack也一样，最终的目的也是通过相应的规则和策略生成相应的bundle文件。
+通过执行运行命令:
+``` bash
+npm run dev
+```
+我们就可以看到最终的执行效果，和我们前几章描述的没有什么区别。
 
-## 1.1. 配置文件基本项简介
+## 1.3. Action全局标志符CONSTANT
+### 1.3.1. CONSTANT的作用
 
-webpack的使用主要就是围绕着对应的配置文件webpack.config.js来进行的，这就是我们上面所说的规则和策略。我们可以通过这个配置文件来对如何将项目进行打包进行配置，最基本的配置相信有以下方面：
-- 依赖遍历入口。webpack打包的最终目的就是找出所有相关的依赖，然后将需要的依赖打包成独立的文件，所以必然需要找到遍历的入口文件。
-- 输出bundle。将所有依赖打包好后，我们应该将其放到一个固定的地方，以便我们的顶层入口程序(index.html)可以引用到。
-- 依赖文件类型解析和转换。因为不同的文件可能需要不同的规则来进行解析，比如配合reactjs的组件文件格式jsx，和javascript的语法规则就不一样，所以需要用到其它解析器或者转换器来将其转成javascript格式，以便打包到同一个bundle里面。这里我们统一将这些解析器和转换器称作加载器。
+当alt的Dispatcher去dispatch一个action，以及当Store去监听一个action的时候，将需要用到这个action的一个全局标志符，官方叫法就是：constant。
 
-下面就是摘录自webpack官网的一个典型的webpack配置文件，其目的就是通过bable-loader这个加载器来将将项目中从src/app.js遍历得出的js后缀的依赖文件，打包成./bin/app.bundle.js文件。
+> action.CONSTANTA constant is automatically available at creation time. This is a unique identifier for the constant that can be used for dispatching and listening.
+
+我们在下面说到Store的重构的时候将会谈及Store是如何通过一个action的全局标志符来监听这个action的。现在我们先看下这个constant大概长什么样子。假如有这样一个Action Class:
+``` js
+class MyActions { updateName() {}}
+```
+创建MyActions后，我们在Store中监听这个action的时候就可以通过以下这种方式来唯一指定它：
+``` js
+myActions.UPDATE_NAME
+```
+其实我们将alt的createActions的返回值打印出来就能印证:
+![](http://upload-images.jianshu.io/upload_images/264714-b0d182bd349c18dc?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+可以看到，每个action都会有自己的constant，且这个constant的值是由Class的类名跟上该action的名称组成的，如:
+``` json
+FAVORITE_LOCATION: "LocationActions.favoriteLocation"
+```
+所以我们的Store在监听的时候既可以使用locationActions.FAVORITE_LOCATION的方式来指定要监听的action，也可以直接指定它的值“LocationActions.favoriteLocation"，其中LocationActions又叫做这个action的命名空间(namespace)。
+
+但是，我们通过alt的generateActions来创建Actions时并没有指定一个Class，那么何来的类名呢？那么它的namespace又是怎样的呢？同样，我们可以将generateActions的返回值打印出来:
+![](http://upload-images.jianshu.io/upload_images/264714-770f8aa1688c6bef?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+从中我们可以看到，alt会自动用“global“作为每个action的constant的值的namespace。
+
+### 1.3.2. Constant的命名规则
+
+那么Action的全局标志符constant的命名规则是怎样的呢？这里我们可以分析下其源码:
 ``` js 
-module.exports = {
- entry: './src/app.js',
- output: { path: './bin', filename: 'app.bundle.js', }, 
-module: { loaders: [{ test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader' }] } 
+function formatAsConstant(name) { 
+  return name.replace(/[a-z]([A-Z])/g, function (i) { 
+    return String(i[0]) + '_' + String(i[1].toLowerCase()); 
+  }).toUpperCase(); 
 }
 ```
-这里的基本项意义就是：
-- entry：依赖遍历入口文件
-- output：bundle打包结果，其中path定义了输出的文件夹，filename则定义了打包结果文件的名称module：定义了对依赖模块的处理逻辑，这里可以用loaders定义了一系列的加载器，以及一些正则。当需要加载的文件匹配test的正则时，就会调用后面的loader对文件进行处理，这正是webpack强大的原因。比如这里定义了凡是.js结尾的文件都是用babel-loader做处理。当然这些loader也需要通过npm install安装
+其中接受的输入参数就是aciton的名称，比如"updateLocations"。
 
-## 1.2 插件
+该函数的意义就是，通过正则表达式来比对输入参数，每当发现输入参数字串中小写字母后面出现大写字母的，就在它们之间插入一个下划线"_"， 然后将整个调整后的字串转成大写。
 
-除了以上的基本项外，webpack.config.js还支持插件plugins来完成一些loader完成不了的功能。
+所以，如果输入的是“updateLocations“，那么输出的结果就是"UPDATE_LOCATIONS"；如果输入的是“updateLocationsSuccess"，输出的就是“UPDATE_LOCATIONS_SUCCESS"。
 
-比如，配置OpenBrowserPlugin插件可以在构建完成之后自动在浏览器中打开"localhost:8080"，这样就不需要我们每次构建完后都要手动在浏览器中打开该地址来进行调试(请参考下面的构建和调试章节)。
+## 1.4. Dispatch Actions
+
+从flux的数据流程示意图来看，我们可以看到Action是由Dispatcher给dispatch给Store的。![](http://upload-images.jianshu.io/upload_images/264714-5d38b641514f4958?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)但是纵观我们的alt-tutorial的代码，并没有看到有相关调用dispatch的地方。其实这就是alt强大的地方，通过跟踪代码，我们可以看到在createActions和generateActions的过程中，alt就已经为我们创建好整一套dispatch的code，我们只需要调用创建Actions后返回对象中相应的action函数就能完成action的dispatch：
+![](http://upload-images.jianshu.io/upload_images/264714-4de40d339d30644c?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+源码在node_modules/alt/lib/actions/index.js：
 ``` js
-var OpenBrowserPlugin = require('open-browser-webpack-plugin'); 
-module.exports = { 
-entry: './src/app.js',
- output: { path: './bin', filename: 'app.bundle.js', }, 
-module: {
- loaders: [{ test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader' }] },
- plugins: [ new OpenBrowserPlugin({ url: 'http://localhost:8080' }) ]
- }
+function makeAction(alt, namespace, name, implementation, obj) { 
+... 
+var dispatch = function dispatch(payload) { 
+  return alt.dispatch(id, payload, data);
+ }; 
+// the action itself 
+var action = function action() {
+ ... 
+// async functions that return promises should not be dispatched 
+if (invocationResult !== undefined && !(0, _isPromise2['default'])(invocationResult)) {
+ ... 
+} else { dispatch(invocationResult); } } 
+... 
+return actionResult; }; 
+... 
+// generate a constant 
+var constant = utils.formatAsConstant(namespaceId); container[constant] = id; return action;}
 ```
 
-# 2. Babel加载器如何支持es6和jsx
+以上代码我尽量把不相关的部分都省略掉了，所以，从理解上来说应该还算直观。整个逻辑就是为一个action创建一个函数引用(就是代码中action那个function，最终通过createActions或者generateActions返回)，该函数会把传入到该action的参数通过alt.dispatch分发出去。该方法最后还通过上面分析的formatAsConstant来生成对应Action的CONSTANT并保存起来。
 
-Babel是个比较大的课题，总的来说Babel是一个转换编译器，有了它我们可以轻松使用上es6的新特性，而不需要等到浏览器支持上。同时Babel也可以支持上reactjs的jsx格式文件的解析转换。为了支持上这些特性，我们的webpack.config.js的加载器应该写成以下的模式：
+# 2. alt Store
+
+alt Action负责命令和数据的构建，以及将数据dispatch出去。那么，谁来接收并处理这些数据呢？这就是Store要做的事情了。总体来说，alt的Store和flux规范的Store并没有太大的区别，主要做的事情就是:- 监听Action- 当Action过来时，进行相应的处理
+
+# 2.1. bindListeners vs. bindAction
+
+alt框架提供了两个监听Action的方式，一个就是bindListeners，另外一个就是bindActions。官方的alt-tutorial实例用的就是第一种方式:
+``` js
+var alt = require('../alt');
+var LocationActions = require('../actions/LocationActions');
+...
+class LocationStore { 
+  constructor() { 
+    this.locations = []; 
+    this.errorMessage = null; 
+    this.bindListeners({ 
+      handleUpdateLocations: LocationActions.UPDATE_LOCATIONS, 
+      handleFetchLocations: LocationActions.FETCH_LOCATIONS, 
+      handleLocationsFailed: LocationActions.LOCATIONS_FAILED,     
+      setFavorites: LocationActions.FAVORITE_LOCATION }); 
+... 
+} 
+handleUpdateLocations(locations) { 
+  this.locations = locations;
+  this.errorMessage = null; } 
+  ...
+}
+module.exports = alt.createStore(LocationStore, 'LocationStore');
+```
+
+从代码中可以看到，bindListeners接受的是一个由键值对组成的列表，其中的键是aciton的处理函数，而值就是我们上面提到的该action的CONSTANT这个Action的唯一标志符。
+
+通过bindListeners，我们可以:
+- 很灵活的指定一个action应该由哪个handler来处理，
+- 且这些handler的名字可以自由发挥。
+
+除了bindListeners，alt还提供了另外一个方法来简化我们的监听代码，那就是bindActions。
+
+相比bindListeners，bindActions有这些特性：
+- 输入的是通过上面的createActions或者generateActions返回的Actions对象
+- 每个Action的handler的名称必须要满足规则："on" + Action的名称；或者直接是：Action的名称。比如updateLocations这个Action， 在Store中的处理函数handler的名称就只能写成onUpdateLocations或者updateLocations，而不能像binListener那样随性发挥。
+
+## 2.2. Store代码重构
+
+所以最终我们可以将以上LocationStore的的代码重构一下：
+``` js
+var alt = require('../alt');
+var LocationActions = require('../actions/LocationActions');
+...
+class LocationStore { 
+  constructor() { 
+    this.locations = []; 
+    this.errorMessage = null; 
+    this.bindActions(LocationActions); 
+... 
+} 
+onUpdateLocations(locations) { 
+  this.locations = locations; 
+  this.errorMessage = null; } 
+  ...
+}
+module.exports = alt.createStore(LocationStore, 'LocationStore');
+```
+这样看上去就会简洁很多。
+
+## 2.3. alt Store的getter
+
+通常我们获取一个Store的数据是通过store的实例调用getState这个reactjs方法，将所有的数据都取回来。但我们经常需要像getter一样从Store中获取一些指定的数据，这个时候怎么办呢？
+
+### 2.3.1 exportPublicMethods
+
+你要知道，通过alt建立的Store类的成员函数默认是没有暴露出来的。
+
+我们可以将alt-tutorial中LocationStore的创建结果打印出来作为印证：
+``` js
+var alt = require('../alt');
+var LocationActions = require('../actions/LocationActions');
+var LocationSource = require('../sources/LocationSource');
+var FavoritesStore = require('./FavoritesStore');
+class LocationStore { 
+constructor() { 
+    this.locations = []; 
+    this.errorMessage = null; 
+    this.bindActions(LocationActions); 
+    this.exportPublicMethods({ getLocation: this.getLocation }); 
+    this.exportAsync(LocationSource); } 
+onUpdateLocations(locations) { 
+    this.locations = locations; 
+    this.errorMessage = null; 
+} 
+onFetchLocations() { 
+    this.locations = []; 
+} 
+onLocationsFailed(errorMessage) { 
+  this.errorMessage = errorMessage; 
+} 
+resetAllFavorites() { 
+  this.locations = this.locations.map((location) => { return { id: location.id, name: location.name, has_favorite: false }; }); 
+} 
+onSetFavorites(location) { 
+  this.waitFor(FavoritesStore); 
+  var favoritedLocations = FavoritesStore.getState().locations; 
+  this.resetAllFavorites(); 
+  favoritedLocations.forEach((location) => { 
+  // find each location in the array 
+  for (var i = 0; i < this.locations.length; i += 1) { 
+  // set has_favorite to true 
+  if (this.locations[i].id === location.id) { 
+    this.locations[i].has_favorite = true; break; } } }); 
+} 
+getLocation(id) { 
+  var { locations } = this.getState(); 
+  for (var i = 0; i < locations.length; i += 1) { if (locations[i].id === id) { return locations[i]; } } return null; }
+}
+let myStore = alt.createStore(LocationStore, 'LocationStore');
+console.log("myStore:",myStore);
+module.exports = myStore;
+```
+通过Chrome的开发者调试工具，我们看下打印的结果：
+![](http://upload-images.jianshu.io/upload_images/264714-ac3cfec2df788c8f?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+从中我们可以看到，LocationStore中定义的成员方法onSetFavorites等都是没有暴露出来的。但是，getLocation这个成员方法是有暴露出来的，这里的关键就是exportPublicMethods这个方法:
 ``` js 
-module: {
- loaders: [{ test: /\.(js|jsx)$/, loader: 'babel', query: { presets:['es2015', 'react'] } }]
- },
+this.exportPublicMethods({ getLocation: this.getLocation });
 ```
-加载器的其它配置项我们都有提及，这里额外的query存在的意义就是：
-- **query**: 为加载器提供额外的配置选项我们这里的配置选项presets就是为了支持上:
-- **'es2015'**: 为了支持es6新特性，暂时我们没有用到，但是在往下的学习过程中，我打算引入一些es6的特性，所以这里一并配置上。
-- **'react'**: 为了支持上react的jsx。
+这个方法的作用就是将Store的一个成员方法(左边的this.getLocation)暴露出去(暴露成左边的getLocation方法)。
 
-# 3. 实战alt-tutorial的webpack配置文件编写
+### 2.3.2. Source的exportAsync 和 registerAsync
 
-有了以上的知识点作为铺垫，那么我们的alt-tutorial项目的webpack.config.js配置文件也就跃然纸上了：
+从上面的图片我们可以看到，创建 LocationStore返回的对象中除了暴露出来一个 getLocation的成员方法，还暴露出来一个fectchLocations的成员方法。事实上这个成员方法是一个异步数据获取的方法，在alt框架中还专门把它们归类叫做Source。
+
+下面就是LocationStore用到的数据源LocationSource的实现:
 ``` js
-var path = require('path');
-var OpenBrowserPlugin = require('open-browser-webpack-plugin');
-var config = { 
- entry: [ path.resolve(__dirname, 'src/App.jsx'), ],
- output: { path: path.resolve(__dirname, 'build'), filename: 'bundle.js' }, 
- module: { loaders: [{ test: /\.(js|jsx)$/, loader: 'babel', query: { presets:[ 'react'] } }] }, 
-plugins: [ new OpenBrowserPlugin({ url: 'http://localhost:8080' }) ]};module.exports = config;
-```
+var LocationSource = { 
+  fetchLocations() { return { 
+    remote() { 
+      return new Promise(function (resolve, reject) { 
+    // simulate an asynchronous flow where data is fetched on 
+    // a remote server somewhere. 
+    setTimeout(function () { 
+      // change this to `false` to see the error action being handled. 
+      if (true) { 
+        // resolve with some mock data 
+      resolve(mockData); } 
+    else { reject('Things have broken'); } }, 250); }); }, 
 
-# 4. 构建和调试
-
-我们当前的alt-tutial项目的package.json中指定的构建工具用的还是browserify，所以我们需要将其改过来。
-``` json 
-"scripts": { "build": "browserify -t [reactify --es6] src/App.jsx > build/app.js", "start": "npm run build && open 'index.html' " },
+    local() { 
+      // Never check locally, always fetch remotely. 
+      return null; 
+    }, 
+    success: LocationActions.updateLocations, 
+    error: LocationActions.locationsFailed, 
+    loading: LocationActions.fetchLocations } }};
 ```
-webpack的build非常简单，只需要执行一个webpack命令就好了。
-``` json 
-"scripts": { "build": "webpack" },
+对于数据的Source，更详尽的描述请参考官网：http://alt.js.org/docs/async/。 这里我只是想指出，将fetchLocations这个source中获取远程数据的方法，作为LocationStore的一个成员方法暴露出去的关键代码就是LocationStore的构造函数中：
+``` js
+this.exportAsync(LocationSource);
 ```
-但是构造好之后，我们还需要将相应的文件发布到一个http服务器上，然后再通过浏览器访问，这也甚是麻烦。幸好，我们有webpack-dev-server这个命令工具，在开发的时候其实我们只需要像上面的构建build调用webpack命令一样，我们可以在安装了webpack-dev-server的模块后，直接调用该命令来进行打包的同时，它还会以当前目录作为根目录启动一个基于express的http服务器，默认的监听端口就是8080。这样配合上面webpack.config.js的OpenBrowserPlugin插件，构建后的运行调试就方便多了。最终我们的package.json的scripts改成如下:
-``` json 
-"scripts": { "build": "webpack", "dev": "webpack-dev-server " },
-```
-当然，webpack-dev-server还支持很多其它的高级参数选项，但是作为初学者，本人就先不深究了。
+alt除了提供exportAsync方法让我们将一个获取远程数据的一部方法暴露出去之外，还提供一个叫做registerAsync的方法。事实上这个方法的使用方式是一样的，究竟要用哪个，那就看个人喜好了。
 
-# 5. 依赖包更新和运行
+# 3. 源码获取
 
-为了能让构建脚本跑起来，我们需要把我们的webpack工具，babel加载器，插件等其它的依赖包给安装上。这里本人就直接给出packge.json的配置，大家直接npm install就好了。
-``` jason
-{ 
-"name": "alt-tutorial", 
-"version": "1.0.0", 
-"description": "A simple flux tutorial built with alt and react", 
-"main": "App.jsx", 
-"dependencies": { "alt": "^0.18.6", "alt-container": "^1.0.2", "alt-utils": "^1.0.0", "babel-core": "^6.14.0", "babel-loader": "^6.2.5", "babel-preset-es2015": "^6.14.0", "babel-preset-react": "^6.11.1", "open-browser-webpack-plugin": "0.0.2", "react": "^15.3.2", "react-addons-test-utils": "^15.3.2", "react-dom": "^15.3.2" }, 
-"devDependencies": { "webpack": "^1.13.2", "webpack-dev-server": "^1.16.1" }, 
-"scripts": { "build": "webpack", "dev": "webpack-dev-server " }, 
-"author": "Josh Perez <josh@goatslacker.com>", 
-"license": "MIT"}
-```
-最后执行以下命令就可以进行构建并在后台打开webpack-dev-server的同时在浏览器自动打开http://localhost:8080进行访问
-``` bash
-npm run dev
-```
+除了上面的一些改动，我还将alt-tutorial上面原来的LocationActions分成了LocationActions和FavoriteActions，前者负责页面上面的所有Locaitons的命令构建和派送，后者负责页面下面的Favorite Locations的命令构建和派送。最终的代码大家可以从https://github.com/kzlathander/alt-tutorial-webpack.git中获得。
 
-# 6. 源码获取
-
-和上一篇的源码一样，本篇的改动都checkin到了github上面，感兴趣的可以通过以下github链接进行获取:https://github.com/kzlathander/alt-tutorial-webpack.gitclone下来后进入项目切换到02这个分支就可以进行构建:
-``` bash
-git clone https://github.com/kzlathander/alt-tutorial-webpack.git
+> git clone https://github.com/kzlathander/alt-tutorial-webpack.git
 cd alt-tutorial-webpackgit 
-checkout 02
-npm install 
-npm run dev
-```
-最终运行结果如下：![运行结果](http://upload-images.jianshu.io/upload_images/264714-a3b8047ff74f7116?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-## 7. 运行
-
-```bash
-git clone https://github.com/kzlathander/alt-tutorial-webpack.git
-cd alt-tutorial-webpack
-git checkout 04
+checkout 03
 npm install
 npm run dev
-```
-
-# 8. 下一篇文章计划
-
-现在我们的alt-tutorial项目使用到的模块是最新的，构建的工具也已经使用上最火热的webpack，所以下一步我是准备走一遍这个项目的运行流程，通过代码阅读来学习一下reactjs和alt的相关知识点，同时也为往后的代码改造以及加入新功能做准备。至于这个过程需要一篇还是多篇文章才能cover完，现在就不得而知了，我们到时再看吧。敬请大家期待，也期待大牛的点评指点。
 
 
 [第五章](https://github.com/zhubaitian/alt-tutorial-webpack/tree/05)
